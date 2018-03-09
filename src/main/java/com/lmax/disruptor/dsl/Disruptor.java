@@ -587,18 +587,18 @@ public class Disruptor<T>
             consumerRepository.unMarkEventProcessorsAsEndOfChain(barrierSequences);
         }
     }
-
-    EventHandlerGroup<T> createEventProcessors(
-        final Sequence[] barrierSequences, final EventProcessorFactory<T>[] processorFactories)
-    {
-        final EventProcessor[] eventProcessors = new EventProcessor[processorFactories.length];
-        for (int i = 0; i < processorFactories.length; i++)
-        {
-            eventProcessors[i] = processorFactories[i].createEventProcessor(ringBuffer, barrierSequences);
-        }
-
-        return handleEventsWith(eventProcessors);
-    }
+    
+    EventHandlerGroup<T> createEventProcessors(final Sequence[] barrierSequences,
+			final EventProcessorFactory<T>[] processorFactories) {
+		final EventProcessor[] eventProcessors = new EventProcessor[processorFactories.length];
+		final Sequence[] sequence = new Sequence[processorFactories.length];
+		for (int i = 0; i < processorFactories.length; i++) {
+			eventProcessors[i] = processorFactories[i].createEventProcessor(ringBuffer, barrierSequences);
+			sequence[i] = eventProcessors[i].getSequence();
+		}
+		updateGatingSequencesForNextInChain(barrierSequences, sequence);
+		return handleEventsWith(eventProcessors);
+	}
 
     EventHandlerGroup<T> createWorkerPool(
         final Sequence[] barrierSequences, final WorkHandler<? super T>[] workHandlers)
